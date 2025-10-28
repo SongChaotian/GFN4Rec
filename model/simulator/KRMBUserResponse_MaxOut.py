@@ -85,9 +85,13 @@ class KRMBUserResponse_MaxOut(KRMBUserResponse):
         self.attn_mask = ~torch.tril(torch.ones((self.max_len,self.max_len), dtype=torch.bool))
         
         # sequence encoder
-        encoder_layer = nn.TransformerEncoderLayer(d_model=2*args.enc_dim, dim_feedforward = args.transformer_d_forward, 
-                                                   nhead=args.attn_n_head, dropout = args.dropout_rate, 
-                                                   batch_first = True)
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model = 2*args.enc_dim,
+            dim_feedforward = args.transformer_d_forward,
+            nhead = args.attn_n_head,
+            dropout = args.dropout_rate,
+            batch_first = True
+        )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=args.transformer_n_layer)
         self.state_dim = 3*args.enc_dim
         
@@ -96,8 +100,13 @@ class KRMBUserResponse_MaxOut(KRMBUserResponse):
         
         # DNN scorer
         self.scorer_hidden_dims = args.scorer_hidden_dims
-        self.scorer = DNN(self.state_dim, args.state_hidden_dims, self.output_dim * args.enc_dim, 
-                          dropout_rate = args.dropout_rate, do_batch_norm = True)
+        self.scorer = DNN(
+            self.state_dim,
+            args.state_hidden_dims,
+            self.output_dim * args.enc_dim,
+            dropout_rate = args.dropout_rate,
+            do_batch_norm = True
+        )
 
     def get_forward(self, feed_dict: dict):
         '''

@@ -115,9 +115,13 @@ if __name__ == '__main__':
             # train an epoch
             model.train()
             reader.set_phase("train")
-            train_loader = DataLoader(reader, batch_size = args.batch_size, 
-                                      shuffle = True, pin_memory = True,
-                                      num_workers = reader.n_worker)
+            train_loader = DataLoader(
+                reader,
+                batch_size = args.batch_size, 
+                shuffle = True,
+                pin_memory = True,
+                num_workers = reader.n_worker
+            )
             t1 = time()
             pbar = tqdm(total = len(reader))
             step_loss = []
