@@ -1,5 +1,4 @@
 mkdir -p output
-
 mkdir -p output/ml1m/
 mkdir -p output/ml1m/env
 mkdir -p output/ml1m/env/log

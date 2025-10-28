@@ -131,12 +131,16 @@ import numpy as np
 def get_onehot_vocab(meta_df, features):
     print('build vocab for onehot features')
     vocab = {}
+
     for f in tqdm(features):
+        # 获取当前特征的所有唯一值
         value_list = list(meta_df[f].unique())
         vocab[f] = {}
+
+        # 为每个唯一值生成one-hot向量
         for i,v in enumerate(value_list):
             onehot_vec = np.zeros(len(value_list))
-            onehot_vec[i] = 1
+            onehot_vec[i] = 1  # 在对应位置设为1
             vocab[f][v] = onehot_vec
     return vocab
 
@@ -146,18 +150,22 @@ def get_multihot_vocab(meta_df, features, sep = ','):
     for f in features:
         print(f'\t{f}')
         ID_freq = {}
+
+        # 统计当前特征中所有ID的出现频率
         for row in tqdm(meta_df[f]):
-            IDs = str(row).split(sep)
+            IDs = str(row).split(sep)  # 按分隔符拆分多个ID
             for ID in IDs:
                 if ID not in ID_freq:
                     ID_freq[ID] = 1
                 else:
                     ID_freq[ID] += 1
+
+        # 为每个唯一的ID生成one-hot向量
         v_list = list(ID_freq.keys())
         vocab[f] = {}
         for i,v in enumerate(v_list):
             onehot_vec = np.zeros(len(v_list))
-            onehot_vec[i] = 1
+            onehot_vec[i] = 1  # 在对应位置设为1
             vocab[f][v] = onehot_vec
     return vocab
 

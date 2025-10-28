@@ -12,9 +12,13 @@ from sklearn.metrics import roc_auc_score
 
 def do_eval(model, reader, args):
     reader.set_phase("val")
-    eval_loader = DataLoader(reader, batch_size = args.val_batch_size,
-                             shuffle = False, pin_memory = False, 
-                             num_workers = reader.n_worker)
+    eval_loader = DataLoader(
+        reader,
+        batch_size = args.val_batch_size,
+        shuffle = False,
+        pin_memory = False,
+        num_workers = reader.n_worker
+    )
     val_report = {'loss': [], 'auc': {}}
     Y_dict = {f: [] for f in model.feedback_types}
     P_dict = {f: [] for f in model.feedback_types}
@@ -25,14 +29,20 @@ def do_eval(model, reader, args):
             out_dict = model.do_forward_and_loss(wrapped_batch)
             loss = out_dict['loss']
             val_report['loss'].append(loss.item())
-            for j,f in enumerate(model.feedback_types):
+
+            # 对每个行为类型分别计算AUC
+            for j, f in enumerate(model.feedback_types):
                 Y_dict[f].append(wrapped_batch[f].view(-1).detach().cpu().numpy())
                 P_dict[f].append(out_dict['preds'][:,:,j].view(-1).detach().cpu().numpy())
             pbar.update(args.batch_size)
     val_report['loss'] = (np.mean(val_report['loss']), np.min(val_report['loss']), np.max(val_report['loss']))
+
+    # 计算每个行为的AUC
     for f in model.feedback_types:
-        val_report['auc'][f] = roc_auc_score(np.concatenate(Y_dict[f]), 
-                                             np.concatenate(P_dict[f]))
+        val_report['auc'][f] = roc_auc_score(
+            np.concatenate(Y_dict[f]),
+            np.concatenate(P_dict[f])
+        )
     pbar.close()
     return val_report
 
