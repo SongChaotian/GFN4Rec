@@ -154,7 +154,7 @@ class SlateGFN_DB(BaseOnlinePolicy):
             
             if is_train or torch.is_tensor(parent_slate):
                 # 训练模式: 使用目标动作计算概率(teacher forcing)
-                action_at_i = parent_slate[:, i]
+                action_at_i = parent_slate[:, i].long()
                 current_P[:, i] = torch.gather(prob, 1, action_at_i.view(-1, 1)).view(-1)
                 current_list_emb[:, i, :] = candidate_item_enc.view(-1, self.enc_dim)[action_at_i]
                 current_flow[:, i] = self.logFlow(current_state).view(-1)
@@ -175,7 +175,7 @@ class SlateGFN_DB(BaseOnlinePolicy):
                     # 利用: 贪心选择
                     _, indices = torch.topk(prob, k=1, dim=1)
                 
-                indices = indices.view(-1).detach()
+                indices = indices.view(-1).detach().long()
                 current_action[:, i] = indices
                 current_P[:, i] = torch.gather(prob, 1, indices.view(-1, 1)).view(-1)
                 
