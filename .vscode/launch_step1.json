@@ -1,0 +1,45 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Train Multi-Behavior Debug",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/train_multibehavior.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "args": [
+                "--epoch", "2",
+                "--seed", "19",
+                "--lr", "0.0001",
+                "--batch_size", "128",
+                "--val_batch_size", "128",
+                "--cuda", "0",
+                "--reader", "MLSeqReader",
+                "--train_file", "../dataset/ml1m/log_session.csv",
+                "--user_meta_file", "../dataset/ml1m/users_processed.csv",
+                "--item_meta_file", "../dataset/ml1m/movies_processed.csv",
+                "--max_hist_seq_len", "50",
+                "--data_separator", ",",
+                "--meta_file_separator", ",",
+                "--n_worker", "4",
+                "--val_holdout_per_user", "5",
+                "--test_holdout_per_user", "5",
+                "--model", "KRMBUserResponse_MaxOut",
+                "--loss", "bce",
+                "--l2_coef", "0.01",
+                "--model_path", "output/ml1m/env/user_KRMBUserResponse_MaxOut_lr0.0001_reg0.01.model",
+                "--user_latent_dim", "16",
+                "--item_latent_dim", "16",
+                "--enc_dim", "32",
+                "--n_ensemble", "2",
+                "--attn_n_head", "4",
+                "--transformer_d_forward", "64",
+                "--transformer_n_layer", "2",
+                "--state_hidden_dims", "128",
+                "--scorer_hidden_dims", "128", "32",
+                "--dropout_rate", "0.1"
+            ]
+        }
+    ]
+}
