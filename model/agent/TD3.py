@@ -217,14 +217,14 @@ class TD3(BaseRLAgent):
 
 
     def load(self):
-        self.critic1.load_state_dict(torch.load(self.save_path + "_critic1", map_location=self.device))
-        self.critic1_optimizer.load_state_dict(torch.load(self.save_path + "_critic1_optimizer", map_location=self.device))
+        self.critic1.load_state_dict(torch.load(self.save_path + "_critic1", map_location=self.device, weights_only=False))
+        self.critic1_optimizer.load_state_dict(torch.load(self.save_path + "_critic1_optimizer", map_location=self.device, weights_only=False))
         self.critic1_target = copy.deepcopy(self.critic1)
         
-        self.critic2.load_state_dict(torch.load(self.save_path + "_critic2", map_location=self.device))
-        self.critic2_optimizer.load_state_dict(torch.load(self.save_path + "_critic2_optimizer", map_location=self.device))
+        self.critic2.load_state_dict(torch.load(self.save_path + "_critic2", map_location=self.device, weights_only=False))
+        self.critic2_optimizer.load_state_dict(torch.load(self.save_path + "_critic2_optimizer", map_location=self.device, weights_only=False))
         self.critic2_target = copy.deepcopy(self.critic2)
 
-        self.actor.load_state_dict(torch.load(self.save_path + "_actor", map_location=self.device))
-        self.actor_optimizer.load_state_dict(torch.load(self.save_path + "_actor_optimizer", map_location=self.device))
+        self.actor.load_state_dict(torch.load(self.save_path + "_actor", map_location=self.device, weights_only=False))
+        self.actor_optimizer.load_state_dict(torch.load(self.save_path + "_actor_optimizer", map_location=self.device, weights_only=False))
         self.actor_target = copy.deepcopy(self.actor)

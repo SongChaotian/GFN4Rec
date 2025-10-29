@@ -124,7 +124,7 @@ class BaseModel(nn.Module):
         if len(model_path) == 0:
             model_path = self.model_path
         print("Load (checkpoint) from " + model_path + ".checkpoint")
-        checkpoint = torch.load(model_path + ".checkpoint", map_location=self.device)
+        checkpoint = torch.load(model_path + ".checkpoint", map_location=self.device, weights_only=False)
         self.reader_stats = checkpoint["reader_stats"]
         print(self.reader_stats)
         self.load_state_dict(checkpoint["model_state_dict"])

@@ -18,7 +18,7 @@ import utils
 
 if __name__ == '__main__':
     
-    # initial args
+    # ============ 第一阶段：解析类名参数 ============
     init_parser = argparse.ArgumentParser()
     init_parser.add_argument('--env_class', type=str, default='KRUserEnvironment_ListRec', help='Environment class.')
     init_parser.add_argument('--policy_class', type=str, default='GFN', help='Policy class')
@@ -28,25 +28,30 @@ if __name__ == '__main__':
     initial_args, _ = init_parser.parse_known_args()
     print(initial_args)
     
+    # 动态加载类
     envClass = eval('{0}.{0}'.format(initial_args.env_class))
     policyClass = eval('{0}.{0}'.format(initial_args.policy_class))
     agentClass = eval('{0}.{0}'.format(initial_args.agent_class))
     bufferClass = eval('{0}.{0}'.format(initial_args.buffer_class))
     
-    setproctitle.setproctitle(f"{initial_args.policy_class}@{initial_args.env_class[:6]} Online")
+    # 设置进程名（方便监控）
+    setproctitle.setproctitle(
+        f"{initial_args.policy_class}@{initial_args.env_class[:6]} Online"
+    )
     
     # control args
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default=11, help='random seed')
     parser.add_argument('--cuda', type=int, default=-1, help='cuda device number; set to -1 (default) if using cpu')
     
-    # customized args
+    # 各模块添加自己的参数
     parser = envClass.parse_model_args(parser)
     parser = policyClass.parse_model_args(parser)
     parser = agentClass.parse_model_args(parser)
     parser = bufferClass.parse_model_args(parser)
     args, _ = parser.parse_known_args()
     
+    # 设置设备和随机种子
     if args.cuda >= 0 and torch.cuda.is_available():
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.cuda)
         torch.cuda.set_device(args.cuda)
@@ -56,17 +61,15 @@ if __name__ == '__main__':
     args.device = device
     utils.set_random_seed(args.seed)
     
-    # Environment
+    # ============ 第三阶段：初始化组件 ============
     print("Loading environment")
     env = envClass(args)
     
-    # Agent
     print("Setup policy:")
     policy = policyClass(args, env, device)
     policy.to(device)
     print(policy)
     
-    # Buffer
     buffer = bufferClass(args)
     print(buffer)
     
@@ -74,6 +77,7 @@ if __name__ == '__main__':
     agent = agentClass(args, policy, env, buffer)
     print(agent)
     
+    # ============ 第四阶段：开始训练 ============
     try:
         print(args)
         agent.train()

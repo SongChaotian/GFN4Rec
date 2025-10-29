@@ -354,8 +354,8 @@ class BaseOnlineAgent():
 
 
     def load(self):
-        self.actor.load_state_dict(torch.load(self.save_path + "_actor", map_location=self.device))
-        self.actor_optimizer.load_state_dict(torch.load(self.save_path + "_actor_optimizer", map_location=self.device))
+        self.actor.load_state_dict(torch.load(self.save_path + "_actor", map_location=self.device, weights_only=False))
+        self.actor_optimizer.load_state_dict(torch.load(self.save_path + "_actor_optimizer", map_location=self.device, weights_only=False))
         self.actor_target = copy.deepcopy(self.actor)
         
         

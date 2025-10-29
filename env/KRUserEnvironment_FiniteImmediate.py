@@ -125,7 +125,7 @@ class KRUserEnvironment_FiniteImmediate():
         model_args = eval(infile.readline()) # model parameters in Namespace
         infile.close()
         # load user model
-        checkpoint = torch.load(model_args.model_path + ".checkpoint", map_location=device)
+        checkpoint = torch.load(model_args.model_path + ".checkpoint", map_location=device, weights_only=False)
         reader_stats = checkpoint["reader_stats"]
         modelClass = eval('{0}.{0}'.format(class_args.model))
         model = modelClass(model_args, reader_stats, device)
