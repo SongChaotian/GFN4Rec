@@ -118,12 +118,12 @@ Output logs and model checkpoints will be saved in *output/<dataset>/agent/*
 
 For training curves check:
 
-> TrainingObservation.ipynb
+> Observation_Training.ipynb
 
 For offline training observation, check:
 
-> OfflineObservation.ipynb
+> Observation_Offline.ipynb
 
 For GFN4Rec analysis, check:
 
-> GFN Observation.ipynb
+> Observation_GFN.ipynb
