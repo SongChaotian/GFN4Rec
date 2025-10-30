@@ -183,41 +183,70 @@ class MLSlateReader(MLSeqReader):
 **参数值**:
 ```bash
 slate_size = 6
-val_holdout_per_user = 5   # 从父类MLSeqReader继承，默认为5
+val_holdout_per_user = 0   # ⭐ 环境参数env_val_holdout=0覆盖了父类默认值
 test_holdout_per_user = 1  # 通过 --env_test_holdout 传递
 ```
 
-**计算过程**:
+**⚠️ 重要说明 - 环境参数覆盖机制**：
+
+在环境初始化时，`KRUserEnvironment_FiniteImmediate.get_reader()` 方法会用环境参数覆盖reader的holdout设置：
+
+```python
+# 代码位置：KRUserEnvironment_FiniteImmediate.py 第142-143行
+def get_reader(self, args):
+    infile = open(args.uirm_log_path, 'r')
+    class_args = eval(infile.readline())
+    training_args = eval(infile.readline())
+    
+    # ⭐ 关键：用环境参数覆盖reader配置
+    training_args.val_holdout_per_user = args.env_val_holdout    # 0 (默认值)
+    training_args.test_holdout_per_user = args.env_test_holdout  # 1 (脚本传参)
+    
+    reader = readerClass(training_args)
+    return reader, training_args
+```
+
+因此，虽然父类`MLSeqReader`的默认`val_holdout_per_user=5`，但**实际生效的是环境参数 `env_val_holdout=0`**（因为脚本中没有传这个参数，使用了`parse_model_args`中定义的默认值0）。
+
+**数据流**：
+```
+脚本传参: --env_test_holdout 1
+        ↓
+环境参数: env_val_holdout=0 (默认), env_test_holdout=1
+        ↓
+覆盖reader配置 (第142-143行)
+        ↓
+实际生效: val_holdout_per_user=0, test_holdout_per_user=1
+```
+
+**计算过程**（修正后）:
 ```python
 # 假设用户有100条交互
-n_train = 100 - (5 + 1) * 6 = 64
+# val_holdout_per_user = 0
+n_train = 100 - (0 + 1) * 6 = 94
 
-# 训练集：前64个交互，每隔6个取一个起始索引
-train_indices = [0, 6, 12, 18, 24, ..., 60]  # 约11个slate起始点
+# 训练集：前94个交互，每隔6个取一个起始索引
+train_indices = [0, 6, 12, 18, 24, ..., 90]  # 约16个slate起始点
 
-# 验证集：接下来30个交互（连续索引）
-val_indices = [64, 65, 66, ..., 93]  # 30个连续索引（5个slate）
+# 验证集：0个交互（因为val_holdout_per_user=0）
+val_indices = []  # 空列表
 
 # 测试集：最后6个交互，每隔6个取一个起始索引
 test_indices = [94]  # 1个slate起始点
 ```
 
-**划分示例**（假设用户有100条交互）:
+**划分示例**（假设用户有100条交互，修正后）:
 ```
 用户1的交互序列:
-├─ 训练集索引: [0, 6, 12, 18, ..., 60]  → 11个slate起始点
-├─ 验证集索引: [64, 65, 66, ..., 93]    → 30个连续索引（5个slate）
+├─ 训练集索引: [0, 6, 12, 18, ..., 90]  → 16个slate起始点
+├─ 验证集索引: []                       → 空（val_holdout_per_user=0）
 └─ 测试集索引: [94]                     → 1个slate起始点
 
 每个索引代表一个slate的起始位置:
 - slate_0: 交互[0:6]
 - slate_1: 交互[6:12]
 - ...
-- slate_10: 交互[60:66]
-- val_slate_0: 交互[64:70]
-- val_slate_1: 交互[70:76]
-- ...
-- val_slate_4: 交互[88:94]
+- slate_15: 交互[90:96]
 - test_slate: 交互[94:100]
 ```
 
@@ -225,7 +254,6 @@ test_indices = [94]  # 1个slate起始点
 1. `[::self.slate_size]` - Python切片语法，表示从0开始，每隔`slate_size`取一个元素
 2. 训练集和测试集只存储**slate的起始索引**，而不是所有交互的索引
 3. 验证集存储**连续的索引**（用于构建完整的slate序列）
-4. **重要修正**：`val_holdout_per_user`参数从父类继承，默认值为5（不是0）
 
 ### 2.4 批次数据格式
 
@@ -596,8 +624,10 @@ experience = {
 test_holdout_per_user = 1
 slate_size = 6
 
+# val_holdout_per_user = 0（环境参数覆盖）
 # 因此测试集是最后 1 * 6 = 6 个交互
-n_train = len(sub_df) - (5 + 1) * 6  # 注意：val_holdout_per_user=5
+# 验证集是 0 * 6 = 0 个交互
+n_train = len(sub_df) - (0 + 1) * 6  # 注意：val_holdout_per_user=0
 
 # 测试集索引（每隔6个取一个，只取1个）
 test_indices = list(sub_df.index[-6::6])  # 只有1个索引
@@ -616,7 +646,7 @@ test_indices = list(sub_df.index[-6::6])  # 只有1个索引
 
 2. **离线GFN训练**：
    - 使用`MLSlateReader`按**slate**组织数据（slate_size=6）
-   - 每用户保留最后1个slate（6个交互）作为测试集，5个slate（30个交互）作为验证集
+   - 每用户保留最后1个slate（6个交互）作为测试集，**没有验证集**（val_holdout_per_user=0）
    - 使用DataLoader从离线日志中采样
    - 训练目标：学习生成高质量推荐列表
 
