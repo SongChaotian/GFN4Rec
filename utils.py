@@ -125,8 +125,7 @@ def padding_and_clip(sequence, max_len, padding_direction = 'left'):
         sequence = [0] * (max_len - len(sequence)) + sequence if padding_direction == 'left' else sequence + [0] * (max_len - len(sequence))
     sequence = sequence[-max_len:] if padding_direction == 'left' else sequence[:max_len]
     return sequence
-    from tqdm import tqdm
-import numpy as np
+
 
 def get_onehot_vocab(meta_df, features):
     print('build vocab for onehot features')

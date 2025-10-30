@@ -14,7 +14,6 @@ class MLSlateReader(MLSeqReader):
     
     @staticmethod
     def parse_data_args(parser):
-        """继承父类参数配置"""
         parser = MLSeqReader.parse_data_args(parser)
         return parser
         
@@ -69,7 +68,6 @@ class MLSlateReader(MLSeqReader):
         return data
         
     def _read_data(self, args):
-        """调用父类读取数据"""
         super()._read_data(args)
     
     ###########################
