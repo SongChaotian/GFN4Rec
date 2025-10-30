@@ -21,16 +21,11 @@ class BaseReader(Dataset):
     
     @staticmethod
     def parse_data_args(parser):
-        parser.add_argument('--train_file', type=str, required=True, 
-                            help='train data file_path')
-        parser.add_argument('--val_file', type=str, default='', 
-                            help='val data file_path')
-        parser.add_argument('--test_file', type=str, default='', 
-                            help='test data file_path')
-        parser.add_argument('--n_worker', type=int, default=4,
-                            help='number of worker for dataset loader')
-        parser.add_argument('--data_separator', type=str, default='\t',
-                            help='separator of csv file')
+        parser.add_argument('--train_file', type=str, required=True, help='train data file_path')
+        parser.add_argument('--val_file', type=str, default='', help='val data file_path')
+        parser.add_argument('--test_file', type=str, default='', help='test data file_path')
+        parser.add_argument('--n_worker', type=int, default=4, help='number of worker for dataset loader')
+        parser.add_argument('--data_separator', type=str, default='\t', help='separator of csv file')
         return parser
     
     def log(self):

@@ -27,18 +27,12 @@ class MLSeqReader(BaseReader):
             - n_worker
         '''
         parser = BaseReader.parse_data_args(parser)
-        parser.add_argument('--user_meta_file', type=str, required=True, 
-                            help='user raw feature file_path')
-        parser.add_argument('--item_meta_file', type=str, required=True, 
-                            help='item raw feature file_path')
-        parser.add_argument('--max_hist_seq_len', type=int, default=100, 
-                            help='maximum history length in the input sequence')
-        parser.add_argument('--val_holdout_per_user', type=int, default=5, 
-                            help='number of holdout records for val set')
-        parser.add_argument('--test_holdout_per_user', type=int, default=5, 
-                            help='number of holdout records for test set')
-        parser.add_argument('--meta_file_sep', type=str, default=',', 
-                            help='separater of user/item meta csv file')
+        parser.add_argument('--user_meta_file', type=str, required=True, help='user raw feature file_path')
+        parser.add_argument('--item_meta_file', type=str, required=True, help='item raw feature file_path')
+        parser.add_argument('--max_hist_seq_len', type=int, default=100, help='maximum history length in the input sequence')
+        parser.add_argument('--val_holdout_per_user', type=int, default=5, help='number of holdout records for val set')
+        parser.add_argument('--test_holdout_per_user', type=int, default=5, help='number of holdout records for test set')
+        parser.add_argument('--meta_file_sep', type=str, default=',', help='separater of user/item meta csv file')
         return parser
         
     def log(self):

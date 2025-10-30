@@ -5,28 +5,16 @@ from tqdm import tqdm
 from reader.MLSeqReader import MLSeqReader
 from utils import padding_and_clip, get_onehot_vocab, get_multihot_vocab
 
+
 class MLSlateReader(MLSeqReader):
-    '''
-    MovieLens Multi-Behavior Data Reader
-    '''
+    """
+    MovieLens Slate数据读取器
+    将连续的交互记录组织成slate（推荐列表）格式
+    """
     
     @staticmethod
     def parse_data_args(parser):
-        '''
-        args:
-        - from MLSeqReader:
-            - user_meta_file
-            - item_meta_file
-            - max_hist_seq_len
-            - val_holdout_per_user
-            - test_holdout_per_user
-            - meta_file_sep
-            - from BaseReader:
-                - train_file
-                - val_file
-                - test_file
-                - n_worker
-        '''
+        """继承父类参数配置"""
         parser = MLSeqReader.parse_data_args(parser)
         return parser
         
@@ -34,56 +22,54 @@ class MLSlateReader(MLSeqReader):
         super().log()
         
     def __init__(self, args):
-        '''
-        - slate_size
-        - from MLMBSeqReader:
-            - max_hist_seq_len
-            - val_holdout_per_user
-            - test_holdout_per_user
-            - from BaseReader:
-                - phase
-                - n_worker
-        '''
+        """
+        初始化Slate读取器
+        Args:
+            args.slate_size: slate长度（推荐列表中的物品数量）
+        """
         print("initiate MLMultiBehaior Slate reader")
         self.slate_size = args.slate_size
         super().__init__(args)
         
     def _sequence_holdout(self, args):
+        """
+        按slate划分训练/验证/测试集
+        
+        划分逻辑：
+            - 训练集：每隔slate_size取一个起始索引
+            - 验证集：连续的val_holdout_per_user*slate_size个交互
+            - 测试集：最后test_holdout_per_user*slate_size个交互，每隔slate_size取一个起始索引
+        """
         print(f"sequence holdout for users (-1, {args.val_holdout_per_user}, {args.test_holdout_per_user})")
+        
         if args.val_holdout_per_user == 0 and args.test_holdout_per_user == 0:
             return {"train": self.log_data.index, "val": [], "test": []}
+        
         data = {"train": [], "val": [], "test": []}
+        
         for u in tqdm(self.users):
             sub_df = self.log_data[self.log_data['user_id'] == u]
+            
+            # 计算训练集大小（扣除验证集和测试集）
             n_train = len(sub_df) - (args.val_holdout_per_user + args.test_holdout_per_user) * self.slate_size
+            
+            # 训练集：每隔slate_size取一个slate起始点
             data['train'].append(list(sub_df.index[:n_train])[::self.slate_size])
-            data['val'].append(list(sub_df.index[n_train:n_train+args.val_holdout_per_user*self.slate_size]))
-            data['test'].append(list(sub_df.index[-args.test_holdout_per_user*self.slate_size::self.slate_size]))
-        for k,v in data.items():
+            
+            # 验证集：连续索引（用于构建完整slate序列）
+            data['val'].append(list(sub_df.index[n_train:n_train + args.val_holdout_per_user * self.slate_size]))
+            
+            # 测试集：每隔slate_size取一个slate起始点
+            data['test'].append(list(sub_df.index[-args.test_holdout_per_user * self.slate_size::self.slate_size]))
+        
+        # 合并所有用户的索引
+        for k, v in data.items():
             data[k] = np.concatenate(v).astype(int)
+        
         return data
         
     def _read_data(self, args):
-        '''
-        - from MLMBSeqReader:
-            - log_data: pd.DataFrame
-            - data: {'train': [row_id], 'val': [row_id], 'test': [row_id]}
-            - users: [user_id]
-            - user_id_vocab: {user_id: encoded_user_id}
-            - user_meta: {user_id: {feature_name: feature_value}}
-            - user_vocab: {feature_name: {feature_value: one-hot vector}}
-            - selected_user_features
-            - items: [item_id]
-            - item_id_vocab: {item_id: encoded_item_id}
-            - item_meta: {item_id: {feature_name: feature_value}}
-            - item_vocab: {feature_name: {feature_value: one-hot vector}}
-            - selected_item_features: [feature_name]
-            - padding_item_meta: {feature_name: 0}
-            - user_history: {uid: [row_id]}
-            - response_list: [response_type]
-            - padding_response: {response_type: 0}
-        - 
-        '''
+        """调用父类读取数据"""
         super()._read_data(args)
     
     ###########################
@@ -91,67 +77,76 @@ class MLSlateReader(MLSeqReader):
     ###########################
         
     def __getitem__(self, idx):
-        '''
-        train batch after collate:
-        {
-            'user_id': (B,)
-            'item_id': (B,slate_size) if train, (B,) otherwise
-            'is_click', 'long_view', ...: (B,slate_size)
-            'uf_{feature}': (B,F_dim(feature)), user features
-            'if_{feature}': (B,slate_size,F_dim(feature))
-            'history': (B,max_H)
-            'history_length': (B,)
-            'history_if_{feature}': (B, max_H, F_dim(feature))
-            'history_{response}': (B, max_H)
-            'loss_weight': (B, n_response)
-        }
-        '''
+        """
+        获取单个slate样本
+        
+        Returns:
+            record: {
+                'user_id': 编码后的用户ID,
+                'item_id': (slate_size,) slate中的物品ID序列,
+                'is_click/is_like/is_star': (slate_size,) slate中每个物品的反馈,
+                'uf_{feature}': 用户特征,
+                'if_{feature}': (slate_size, feature_dim) slate中每个物品的特征,
+                'history': (max_H,) 用户历史物品ID,
+                'history_length': 历史长度,
+                'history_if_{feature}': (max_H, feature_dim) 历史物品特征,
+                'history_{response}': (max_H,) 历史反馈
+            }
+        """
+        # 获取slate起始位置
         row_id = self.data[self.phase][idx]
         row = self.log_data.iloc[row_id]
+        user_id = row['user_id']
         
-        user_id = row['user_id'] # raw user ID
+        # 构建样本记录
+        record = {'user_id': self.user_id_vocab[user_id]}
+        
+        # 添加用户特征
         user_meta = self.get_user_meta_data(user_id)
-        
-        # (slate_size,), {'if_{feature_name}': (slate_size * feature_dim,)}, {'if_{response_name}': (slate_size,)}
-        item_id, item_meta, item_response = self.get_slate(user_id, row_id)
-        record = {
-            'user_id': self.user_id_vocab[row['user_id']], # encoded user ID
-            'item_id': item_id # encoded item ID
-        }
         record.update(user_meta)
+        
+        # 获取slate（从row_id开始的连续slate_size个物品）
+        item_id, item_meta, item_response = self.get_slate(user_id, row_id)
+        record['item_id'] = item_id
         record.update(item_meta)
         record.update(item_response)
         
-        # (max_H,)
+        # 获取用户历史（row_id之前的交互）
         H_rowIDs = [rid for rid in self.user_history[user_id] if rid < row_id][-self.max_hist_seq_len:]
         history, hist_length, hist_meta, hist_response = self.get_user_history(H_rowIDs)
         record['history'] = np.array(history)
         record['history_length'] = hist_length
-        for f,v in hist_meta.items():
+        
+        for f, v in hist_meta.items():
             record[f'history_{f}'] = v
-        for f,v in hist_response.items():
+        for f, v in hist_response.items():
             record[f'history_{f}'] = v
-            
-#         loss_weight = np.array([1. if record[f] == 1 else self.response_neg_sample_rate[f] \
-#                                 for i,f in enumerate(self.response_list)])
-#         record["loss_weight"] = loss_weight
+        
         return record
     
     def get_slate(self, user_id, row_id):
-        # ensure slate size alignment by setting: test_holdout_per_user + val_holdout_per_user >= 5
-        S_rowIDs = [rid for rid in self.user_history[user_id] if row_id <= rid][:self.slate_size]
+        """
+        获取从row_id开始的连续slate_size个物品
         
+        Returns:
+            slate_ids: (slate_size,) 物品ID序列
+            slate_meta: {if_{feature}: (slate_size, feature_dim)} 物品特征
+            slate_response: {response_type: (slate_size,)} 用户反馈
+        """
+        # 获取从row_id开始的slate_size个交互记录
+        S_rowIDs = [rid for rid in self.user_history[user_id] if row_id <= rid][:self.slate_size]
         H = self.log_data.iloc[S_rowIDs]
-        # (slate_size,)
+        
+        # 提取物品ID
         slate_ids = np.array([self.item_id_vocab[iid] for iid in H['movie_id']])
-        # [{if_{feature}: one-hot vector}]
-        meta_list = [self.get_item_meta_data(iid) for iid in H['movie_id']] 
-        # slate item meta features: {if_{feature_name}: (slate_size, feature_dim)}
-        slate_meta = {} 
+        
+        # 提取物品特征
+        meta_list = [self.get_item_meta_data(iid) for iid in H['movie_id']]
+        slate_meta = {}
         for f in self.selected_item_features:
-            # {if_{feature_name}: (slate_size, feature_dim)}
             slate_meta[f'if_{f}'] = np.array([v_dict[f'if_{f}'] for v_dict in meta_list])
-        # {resp_type: (slate_size,)}
+        
+        # 提取用户反馈
         slate_response = {}
         for resp in self.response_list:
             slate_response[resp] = np.array(H[resp])
@@ -159,25 +154,7 @@ class MLSlateReader(MLSeqReader):
         return slate_ids, slate_meta, slate_response
 
     def get_statistics(self):
-        '''
-        - slate_size
-        - from MLMBSeqReader
-            - raw_data_size
-            - data_size
-            - n_user
-            - n_item
-            - max_seq_len
-            - user_features
-            - user_feature_dims
-            - item_features
-            - item_feature_dims
-            - feedback_type
-            - feedback_size
-            - feedback_negative_sample_rate
-            - from BaseReader:
-                - length
-                - fields
-        '''
+        """返回数据集统计信息"""
         stats = super().get_statistics()
         stats["slate_size"] = self.slate_size
         return stats
