@@ -24,7 +24,7 @@ class KRUserEnvironment_FiniteImmediate():
     def parse_model_args(parser):
         '''环境参数配置'''
         parser.add_argument('--uirm_log_path', type=str, required=True, help='用户响应模型的日志路径')
-        parser.add_argument('--initial_temper', type=int, required=10, elp='用户初始耐心值')
+        parser.add_argument('--initial_temper', type=int, required=10, help='用户初始耐心值')
         parser.add_argument('--slate_size', type=int, required=6, help='每次推荐的物品数量')
         parser.add_argument('--max_step_per_episode', type=int, default=30, help='每个episode的最大步数')
         parser.add_argument('--episode_batch_size', type=int, default=32, help='并行运行的用户数')
