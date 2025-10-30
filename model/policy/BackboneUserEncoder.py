@@ -28,22 +28,14 @@ class BackboneUserEncoder(BaseModel):
         '''
         parser = BaseModel.parse_model_args(parser)
         
-        parser.add_argument('--user_latent_dim', type=int, default=16, 
-                            help='user latent embedding size')
-        parser.add_argument('--item_latent_dim', type=int, default=16, 
-                            help='item latent embedding size')
-        parser.add_argument('--transformer_enc_dim', type=int, default=32, 
-                            help='item encoding size')
-        parser.add_argument('--transformer_n_head', type=int, default=4, 
-                            help='number of attention heads in transformer')
-        parser.add_argument('--transformer_d_forward', type=int, default=64, 
-                            help='forward layer dimension in transformer')
-        parser.add_argument('--transformer_n_layer', type=int, default=2, 
-                            help='number of encoder layers in transformer')
-        parser.add_argument('--state_hidden_dims', type=int, nargs="+", default=[128], 
-                            help='hidden dimensions of final state encoding layers')
-        parser.add_argument('--dropout_rate', type=float, default=0.1, 
-                            help='dropout rate in deep layers')
+        parser.add_argument('--user_latent_dim', type=int, default=16, help='user latent embedding size')
+        parser.add_argument('--item_latent_dim', type=int, default=16, help='item latent embedding size')
+        parser.add_argument('--transformer_enc_dim', type=int, default=32, help='item encoding size')
+        parser.add_argument('--transformer_n_head', type=int, default=4, help='number of attention heads in transformer')
+        parser.add_argument('--transformer_d_forward', type=int, default=64, help='forward layer dimension in transformer')
+        parser.add_argument('--transformer_n_layer', type=int, default=2, help='number of encoder layers in transformer')
+        parser.add_argument('--state_hidden_dims', type=int, nargs="+", default=[128], help='hidden dimensions of final state encoding layers')
+        parser.add_argument('--dropout_rate', type=float, default=0.1, help='dropout rate in deep layers')
         return parser
         
     def __init__(self, args, reader_stats, device):
@@ -104,16 +96,24 @@ class BackboneUserEncoder(BaseModel):
         self.attn_mask = ~torch.tril(torch.ones((self.max_len,self.max_len), dtype=torch.bool))
         
         # sequence encoder
-        encoder_layer = nn.TransformerEncoderLayer(d_model=2*args.transformer_enc_dim, 
-                                                   dim_feedforward = args.transformer_d_forward, 
-                                                   nhead=args.transformer_n_head, dropout = args.dropout_rate, 
-                                                   batch_first = True)
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=2 * args.transformer_enc_dim,
+            dim_feedforward=args.transformer_d_forward,
+            nhead=args.transformer_n_head,
+            dropout=args.dropout_rate,
+            batch_first=True
+        )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=args.transformer_n_layer)
         
         # DNN state encoder
         self.stateNorm = nn.LayerNorm(self.state_dim)
-        self.finalStateLayer = DNN(3*args.transformer_enc_dim, args.state_hidden_dims, self.state_dim,
-                                dropout_rate = args.dropout_rate, do_batch_norm = True)
+        self.finalStateLayer = DNN(
+            3 * args.transformer_enc_dim,
+            args.state_hidden_dims,
+            self.state_dim,
+            dropout_rate=args.dropout_rate,
+            do_batch_norm=True
+        )
         
         #self.actionModule = torch.nn.Sigmoid(self.actionModule)
 

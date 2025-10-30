@@ -12,12 +12,9 @@ class BaseModel(nn.Module):
     
     @staticmethod
     def parse_model_args(parser):
-        parser.add_argument('--model_path', type=str, default='',
-                            help='Model save path.')
-        parser.add_argument('--loss', type=str, default='bce',
-                            help='loss type')
-        parser.add_argument('--l2_coef', type=float, default=0.,
-                            help='coefficient of regularization term')
+        parser.add_argument('--model_path', type=str, default='', help='Model save path.')
+        parser.add_argument('--loss', type=str, default='bce', help='loss type')
+        parser.add_argument('--l2_coef', type=float, default=0., help='coefficient of regularization term')
         return parser
     
     def __init__(self, args, reader_stats, device):

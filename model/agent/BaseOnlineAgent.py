@@ -44,38 +44,22 @@ class BaseOnlineAgent():
             - train_every_n_step: 每N步交互进行一次训练
             - batch_size: 从Buffer采样的批次大小
         """
-        parser.add_argument('--n_iter', type=int, nargs='+', default=[2000], 
-                            help='训练迭代次数')
-        parser.add_argument('--train_every_n_step', type=int, default=1, 
-                            help='每N次episode采样进行一次训练步')
-        parser.add_argument('--reward_func', type=str, default='get_immediate_reward', 
-                            help='奖励函数名称（见model.agent.reward_func）')
-        parser.add_argument('--single_response', action='store_true', 
-                            help='是否只使用单一反馈类型计算奖励')
-        parser.add_argument('--start_train_at_step', type=int, default=1000,
-                            help='开始训练前的随机探索步数（用于填充Buffer）')
-        parser.add_argument('--initial_greedy_epsilon', type=float, default=0.6, 
-                            help='ε-greedy的初始探索率')
-        parser.add_argument('--final_greedy_epsilon', type=float, default=0.05, 
-                            help='ε-greedy的最终探索率')
-        parser.add_argument('--elbow_greedy', type=float, default=0.5, 
-                            help='探索率衰减的拐点位置（相对于总迭代次数的比例）')
-        parser.add_argument('--check_episode', type=int, default=100, 
-                            help='每N次迭代记录一次日志和评估指标')
-        parser.add_argument('--test_episode', type=int, default=1000, 
-                            help='每N次迭代进行一次测试')
-        parser.add_argument('--save_episode', type=int, default=1000, 
-                            help='每N次迭代保存一次模型')
-        parser.add_argument('--save_path', type=str, required=True, 
-                            help='模型保存路径')
-        parser.add_argument('--batch_size', type=int, default=64, 
-                            help='训练批次大小')
-        parser.add_argument('--actor_lr', type=float, default=1e-4, 
-                            help='Actor网络学习率')
-        parser.add_argument('--actor_decay', type=float, default=1e-4, 
-                            help='Actor网络权重衰减（L2正则化）')
-        parser.add_argument('--explore_rate', type=float, default=1, 
-                            help='触发探索的概率')
+        parser.add_argument('--n_iter', type=int, nargs='+', default=[2000], help='训练迭代次数')
+        parser.add_argument('--train_every_n_step', type=int, default=1, help='每N次episode采样进行一次训练步')
+        parser.add_argument('--reward_func', type=str, default='get_immediate_reward', help='奖励函数名称（见model.agent.reward_func）')
+        parser.add_argument('--single_response', action='store_true', help='是否只使用单一反馈类型计算奖励')
+        parser.add_argument('--start_train_at_step', type=int, default=1000, help='开始训练前的随机探索步数（用于填充Buffer）')
+        parser.add_argument('--initial_greedy_epsilon', type=float, default=0.6, help='ε-greedy的初始探索率')
+        parser.add_argument('--final_greedy_epsilon', type=float, default=0.05, help='ε-greedy的最终探索率')
+        parser.add_argument('--elbow_greedy', type=float, default=0.5, help='探索率衰减的拐点位置（相对于总迭代次数的比例）')
+        parser.add_argument('--check_episode', type=int, default=100, help='每N次迭代记录一次日志和评估指标')
+        parser.add_argument('--test_episode', type=int, default=1000, help='每N次迭代进行一次测试')
+        parser.add_argument('--save_episode', type=int, default=1000, help='每N次迭代保存一次模型')
+        parser.add_argument('--save_path', type=str, required=True, help='模型保存路径')
+        parser.add_argument('--batch_size', type=int, default=64, help='训练批次大小')
+        parser.add_argument('--actor_lr', type=float, default=1e-4, help='Actor网络学习率')
+        parser.add_argument('--actor_decay', type=float, default=1e-4, help='Actor网络权重衰减（L2正则化）')
+        parser.add_argument('--explore_rate', type=float, default=1, help='触发探索的概率')
         return parser
     
     def __init__(self, *input_args):

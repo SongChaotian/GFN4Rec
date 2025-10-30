@@ -19,7 +19,6 @@ class KRUserEnvironment_ListRec(KRUserEnvironment_FiniteImmediate):
     
     @staticmethod
     def parse_model_args(parser):
-        '''继承父类参数配置'''
         parser = KRUserEnvironment_FiniteImmediate.parse_model_args(parser)
         return parser
     

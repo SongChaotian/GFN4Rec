@@ -13,8 +13,7 @@ class KRMBUserResponse_MaxOut(KRMBUserResponse):
     @staticmethod
     def parse_model_args(parser):
         parser = KRMBUserResponse.parse_model_args(parser)
-        parser.add_argument('--n_ensemble', type=int, default=2, 
-                            help='item encoding size')
+        parser.add_argument('--n_ensemble', type=int, default=2, help='item encoding size')
         return parser
         
     def __init__(self, args, reader_stats, device):

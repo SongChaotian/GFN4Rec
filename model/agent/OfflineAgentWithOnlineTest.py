@@ -94,12 +94,21 @@ class OfflineAgentWithOnlineTest(BaseOnlineAgent):
             # 日志记录
             if i % self.check_episode == 0 and i >= self.check_episode:
                 t_prime = time.time()
-                print(f"Episode step {i}, time diff {t_prime - t}, total time diff {t - start_time})")
                 episode_report, train_report = self.get_report()
-                log_str = f"step: {i} @ online episode: {episode_report} @ training: {train_report}\n"
+                
+                log_str = (
+                    f"\n{'='*80}\n"
+                    f"Step {i:6d} | Interval: {t_prime-t:6.1f}s | Total: {t_prime-start_time:8.1f}s\n"
+                    f"{'-'*80}\n"
+                    f"Episode: {episode_report}\n"
+                    f"Training: {train_report}\n"
+                    f"{'='*80}\n"
+                )
+
+                print(log_str)
                 with open(self.save_path + ".report", 'a') as outfile:
                     outfile.write(log_str)
-                print(log_str)
+
                 t = t_prime
             
             # 保存模型

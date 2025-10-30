@@ -14,24 +14,15 @@ class KRMBUserResponse(BaseModel):
     def parse_model_args(parser):
         parser = BaseModel.parse_model_args(parser)
         
-        parser.add_argument('--user_latent_dim', type=int, default=16, 
-                            help='user latent embedding size')
-        parser.add_argument('--item_latent_dim', type=int, default=16, 
-                            help='item latent embedding size')
-        parser.add_argument('--enc_dim', type=int, default=32, 
-                            help='item encoding size')
-        parser.add_argument('--attn_n_head', type=int, default=4, 
-                            help='number of attention heads in transformer')
-        parser.add_argument('--transformer_d_forward', type=int, default=64, 
-                            help='forward layer dimension in transformer')
-        parser.add_argument('--transformer_n_layer', type=int, default=2, 
-                            help='number of encoder layers in transformer')
-        parser.add_argument('--state_hidden_dims', type=int, nargs='+', default=[128], 
-                            help='hidden dimensions')
-        parser.add_argument('--scorer_hidden_dims', type=int, nargs='+', default=[128], 
-                            help='hidden dimensions')
-        parser.add_argument('--dropout_rate', type=float, default=0.1, 
-                            help='dropout rate in deep layers')
+        parser.add_argument('--user_latent_dim', type=int, default=16, help='user latent embedding size')
+        parser.add_argument('--item_latent_dim', type=int, default=16, help='item latent embedding size')
+        parser.add_argument('--enc_dim', type=int, default=32, help='item encoding size')
+        parser.add_argument('--attn_n_head', type=int, default=4, help='number of attention heads in transformer')
+        parser.add_argument('--transformer_d_forward', type=int, default=64, help='forward layer dimension in transformer')
+        parser.add_argument('--transformer_n_layer', type=int, default=2, help='number of encoder layers in transformer')
+        parser.add_argument('--state_hidden_dims', type=int, nargs='+', default=[128],  help='hidden dimensions')
+        parser.add_argument('--scorer_hidden_dims', type=int, nargs='+', default=[128], help='hidden dimensions')
+        parser.add_argument('--dropout_rate', type=float, default=0.1, help='dropout rate in deep layers')
         return parser
         
     def __init__(self, args, reader_stats, device):
