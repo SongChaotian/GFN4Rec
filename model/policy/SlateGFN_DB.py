@@ -180,8 +180,7 @@ class SlateGFN_DB(BaseOnlinePolicy):
             selection_weight = self.pForwardEncoder(current_state)
             selection_weight = self.pForwardNorm(selection_weight)
             
-            # 计算候选物品得分 (B, L)
-            # score = <selection_weight, item_encoding>
+            # 计算点积得分 (B, L)
             score = torch.sum(
                 selection_weight.view(B, 1, self.enc_dim) * candidate_item_enc, 
                 dim=-1
@@ -191,17 +190,27 @@ class SlateGFN_DB(BaseOnlinePolicy):
             
             # 根据模式选择动作
             if is_train or torch.is_tensor(parent_slate):
-                # 训练模式: 使用目标动作计算概率(teacher forcing)
+                # 训练模式: 使用ground truth动作（teacher forcing）
+                # 从目标列表parent_slate中获取第i个位置的物品ID
                 action_at_i = parent_slate[:, i].long()
+                
+                # 提取该动作对应的前向概率 P_F(a_t|u, O_{t-1})
+                # 用于后续计算DB loss中的 log P_F 项
                 current_P[:, i] = torch.gather(prob, 1, action_at_i.view(-1, 1)).view(-1)
+                
+                # 获取选中物品的编码，更新当前列表表示 O_t
                 current_list_emb[:, i, :] = candidate_item_enc.view(-1, self.enc_dim)[action_at_i]
-                # 计算当前节点O_{t-1}的流值
+                
+                # 计算当前状态 O_{t-1} 的流值 log F(u, O_{t-1})
+                # 注意：这里计算的是父节点的流，用于DB loss的forward_part
                 current_flow[:, i] = self.logFlow(current_state).view(-1)
+                
+                # 记录选择的动作
                 current_action[:, i] = action_at_i
             else:
                 # 推理模式: 采样或贪心选择
                 if i > 0:
-                    # 移除已选择的物品(避免重复)
+                    # 屏蔽已选物品：将前i步已推荐的物品概率置0，保证列表无重复
                     prob.scatter_(1, current_action[:, :i], 0)
                 
                 if do_explore:
@@ -288,9 +297,14 @@ class SlateGFN_DB(BaseOnlinePolicy):
         """
         # 【中间节点的详细平衡损失】
         # 父节点流值: log F(u, O_{t-1}), (B, K)
+        # 取前K个: [log F(O_0), log F(O_1), ..., log F(O_{K-1})]
         parent_flow = out_dict['logF'][:, :-1]
+        
         # 当前节点流值: log F(u, O_t), (B, K)
+        # 取后K个: [log F(O_1), log F(O_2), ..., log F(O_K)]
         current_flow = out_dict['logF'][:, 1:]
+
+
         # 前向对数概率: log(P_F(a_t|u,O_{t-1}) + b_f), (B, K)
         log_P = torch.log(out_dict['prob'] + self.gfn_forward_offset)
         

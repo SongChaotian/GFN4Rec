@@ -234,7 +234,7 @@ class OfflineAgentWithOnlineTest(BaseOnlineAgent):
         # (B, slate_size, response_dim)
         target_response = torch.cat([
             batch_sample[resp].view(B, self.env.action_dim, 1)
-            for i, resp in enumerate(self.response_types)
+            for resp in self.response_types
         ], dim=2)
         
         # 构造用户反馈字典

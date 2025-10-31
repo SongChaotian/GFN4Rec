@@ -115,7 +115,7 @@ def __getitem__(self, idx):
 }
 ```
 
-**重要**: 用户模拟器训练时，每个样本是**单个交互记录**（一个用户对一个物品的反馈），不是一个slate。
+**重要**: 用户模拟器训练时（其实就是训练一个精排模型），每个样本是**单个交互记录**（一个用户对一个物品的反馈），不是一个slate。
 
 ---
 
@@ -219,7 +219,7 @@ def get_reader(self, args):
 实际生效: val_holdout_per_user=0, test_holdout_per_user=1
 ```
 
-**计算过程**（修正后）:
+**计算过程**:
 ```python
 # 假设用户有100条交互
 # val_holdout_per_user = 0
